@@ -257,6 +257,55 @@ static char *map_inter_file_path(const char *filename)
         free(filename2);
     }
 
+    char *param = NULL;
+    param = strstr(filename, ".mpd&");
+    if (param)
+    {
+        int pos = param - filename;
+        param+=5;
+        int len = strlen(param)+1;
+        int idx = 0;
+        int start = -1;
+        int end = -1;
+        while(idx < len)
+        {
+            if(param[idx] == '=')
+                start = idx-1;
+        
+            if((param[idx] == '\0') || (param[idx] == '\n') || (param[idx] == '&'))
+                end = idx;
+ 
+            if(start != -1 && end != -1)
+            {
+                char str[128];
+                strncpy(str, param+start, end-start);
+                str[end-start] = '\0';
+
+                switch(str[0])
+                {
+                case '0':
+                    ffmpeg_av_dict_set("video_rep_index", str+2, 0);
+                    break;
+                case '1':
+                    ffmpeg_av_dict_set("audio_rep_index", str+2, 0);
+                    break;
+                case '5':
+                    ffmpeg_av_dict_set("cenc_decryption_key", str+2, 0);
+                    break;
+                case '6':
+                    ffmpeg_av_dict_set("cenc_decryption_video_key", str+2, 0);
+                    break;
+                case '7':
+                    ffmpeg_av_dict_set("cenc_decryption_audio_key", str+2, 0);
+                    break;
+                }
+                start = end = -1;
+            }
+            idx++;
+        }
+        filename[pos+4] = '\0';
+    }
+
     return ret;
 }
 
