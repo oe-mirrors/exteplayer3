@@ -1,5 +1,6 @@
 CC ?= gcc
 CFLAGS += -D_FILE_OFFSET_BITS=64 -D_LARGEFILE64_SOURCE -D_LARGEFILE_SOURCE -DHAVE_FLV2MPEG4_CONVERTER
+CFLAGS += -DAUDIO_GET_PTS=VIDEO_GET_PTS
 LDFLAGS += -lswscale -ldl -lpthread -lavformat -lavcodec -lavutil -lswresample
 
 SRC_DIR := src
