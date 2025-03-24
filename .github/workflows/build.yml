@@ -29,65 +29,6 @@ jobs:
           libasound2-dev \
           libpthread-stubs0-dev
 
-    - name: Add compile.sh
+    - name: Compile exteplayer3
       run: |
-        cat << 'EOF' > compile.sh
-        #!/bin/bash
-        set -e
-
-        echo "Compiling exteplayer3..."
-
-        SRC_DIR=$(pwd)
-
-        SOURCE_FILES=" \
-        main/exteplayer.c \
-        container/container.c \
-        container/container_ffmpeg.c \
-        manager/manager.c \
-        manager/audio.c \
-        manager/video.c \
-        manager/subtitle.c \
-        output/output_subtitle.c \
-        output/output.c \
-        output/writer/common/pes.c \
-        output/writer/common/misc.c \
-        output/writer/common/writer.c \
-        output/linuxdvb_fake.c \
-        output/linuxdvb_buffering.c \
-        output/graphic_subtitle.c \
-        playback/playback.c \
-        external/ffmpeg/src/bitstream.c \
-        external/ffmpeg/src/latmenc.c \
-        external/ffmpeg/src/mpeg4audio.c \
-        external/ffmpeg/src/xiph.c \
-        external/flv2mpeg4/src/m4vencode.c \
-        external/flv2mpeg4/src/flvdecoder.c \
-        external/flv2mpeg4/src/dcprediction.c \
-        external/flv2mpeg4/src/flv2mpeg4.c \
-        external/plugins/src/png.c \
-        tools/strbuffer.c \
-        tools/debug.c \
-        "
-
-        gcc $SOURCE_FILES \
-          -D_FILE_OFFSET_BITS=64 \
-          -D_LARGEFILE64_SOURCE \
-          -D_LARGEFILE_SOURCE \
-          -DHAVE_FLV2MPEG4_CONVERTER \
-          -I${SRC_DIR}/include \
-          -I${SRC_DIR}/external \
-          -I${SRC_DIR}/external/flv2mpeg4 \
-          -lswscale -ldl -lpthread -lavformat -lavcodec -lavutil -lswresample \
-          -o exteplayer3
-
-        echo "Build complete: exteplayer3"
-        EOF
-        chmod +x compile.sh
-
-    - name: Run compile script
-      run: ./compile.sh
-
-    - name: Verify build
-      run: |
-        ls -lh exteplayer3
-        file exteplayer3
+        make -j$(nproc)
