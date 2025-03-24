@@ -39,13 +39,13 @@
 
 #include <pthread.h>
 
+#include "strbuffer.h"
 #include "common.h"
 #include "misc.h"
 
 #include "debug.h"
 
 #define DUMP_BOOL(x) 0 == x ? "false"  : "true"
-#define IPTV_MAX_FILE_PATH 3096
 
 extern int ffmpeg_av_dict_set(const char *key, const char *value, int flags);
 extern void       aac_software_decoder_set(const int32_t val);
@@ -99,6 +99,7 @@ static pthread_mutex_t playbackStartMtx;
 static int32_t g_windows_width = 1280;
 static int32_t g_windows_height = 720;
 static char *g_graphic_sub_path;
+static int tracks_cache_disabled = 0;
 
 const char* GetGraphicSubPath()
 {
@@ -205,24 +206,94 @@ finish:
     
 }
 
-static void map_inter_file_path(char *filename)
+static char *map_inter_file_path(const char *filename)
 {
-    if (0 == strncmp(filename, "iptv://", 7))
+    char *filename2 = NULL;
+
+    if( strncmp(filename, "iptv://", 7) == 0 )
     {
         FILE *f = fopen(filename + 7, "r");
-        if (NULL != f)
+        if( f != NULL )
         {
-            size_t num = fread(filename, 1, IPTV_MAX_FILE_PATH-1, f);
+            fseek(f, 0L, SEEK_END);
+            size_t file_size = ftell(f);
+            rewind(f);
+
+            filename2 = malloc(file_size+2);
+            size_t num = fread(filename2, file_size, 1, f);
             fclose(f);
-            if (num > 0 && filename[num-1] == '\n')
+
+            if (num > 0 && filename2[num-1] == '\n')
             {
-                filename[num-1] = '\0';
+                filename2[num-1] = '\0';
             }
             else
             {
-                filename[num] = '\0';
+                filename2[num] = '\0';
             }
+            filename = filename2;
         }
+        else
+        {
+            return NULL;
+        }
+    }
+
+    size_t filename_len = strlen(filename);
+    const char *filname_prefix = "";
+
+    if( strstr(filename, "://") == NULL )
+    {
+        filname_prefix = "file://";
+        filename_len += strlen(filname_prefix);
+    }
+
+    char *ret = malloc(filename_len+2);
+    strcpy(ret, filname_prefix);
+    strcat(ret, filename);
+
+    if( filename2 )
+    {
+        free(filename2);
+    }
+
+    return ret;
+}
+
+/**
+ * This is workaround for images where ServiceApp doesn't support suburi parameter used to pass second (audio) file for playback.
+ * We will handle suburi parameter here, so this will work with any ServiceApp version.
+ */
+static void process_suburi(PlayFiles_t *play_files)
+{
+    if(play_files->szSecondFile)
+    {
+        return;
+    }
+
+    char *orig_file = play_files->szFirstFile;
+
+    if( strncmp(orig_file, "http://", 7) != 0 && strncmp(orig_file, "https://", 8) != 0 )
+    {
+        return;
+    }
+
+    const char *p = strstr(orig_file, "&suburi=");
+
+    if( p )
+    {
+        size_t part_len = (size_t) (p - orig_file);
+
+        play_files->szFirstFile = malloc(part_len + 1);
+        memcpy(play_files->szFirstFile, orig_file, part_len);
+        play_files->szFirstFile[part_len] = '\0';
+
+        part_len = strlen(p + 8);
+        play_files->szSecondFile = malloc(part_len + 1);
+        memcpy(play_files->szSecondFile, p+8, part_len);
+        play_files->szSecondFile[part_len] = '\0';
+
+        free(orig_file);
     }
 }
 
@@ -284,7 +355,7 @@ static void SetNice(int prio)
 #endif
 }
 
-static int HandleTracks(const Manager_t *ptrManager, const PlaybackCmd_t playbackSwitchCmd, const char *argvBuff)
+static int HandleTracks(Manager_t *ptrManager, const PlaybackCmd_t playbackSwitchCmd, const char *argvBuff)
 {
     int commandRetVal = 0;
     
@@ -297,32 +368,53 @@ static int HandleTracks(const Manager_t *ptrManager, const PlaybackCmd_t playbac
     {
         case 'l': 
         {
-            TrackDescription_t *TrackList = NULL;
-            ptrManager->Command(g_player, MANAGER_LIST, &TrackList);
-            if( NULL != TrackList) 
-            {
-                int i = 0;
-                E2iStartMsg();
-                E2iSendMsg("{\"%c_%c\": [", argvBuff[0], argvBuff[1]);
-                for (i = 0; TrackList[i].Id >= 0; ++i) 
-                {
-                    if(0 < i)
-                    {
-                        E2iSendMsg(", ");
-                    }
-                    E2iSendMsg("{\"id\":%d,\"e\":\"%s\",\"n\":\"%s\"}", TrackList[i].Id , TrackList[i].Encoding, TrackList[i].Name);
-                    free(TrackList[i].Encoding);
-                    free(TrackList[i].Name);
-                }
-                E2iSendMsg("]}\n");
-                E2iEndMsg();
-                free(TrackList);
-            }
-            else
-            {
-                // not tracks 
-                E2iSendMsg("{\"%c_%c\": []}\n", argvBuff[0], argvBuff[1]);
-            }
+        	if( ptrManager->tracks_cache == NULL )
+        	{
+        		/* read tracks info into cache */
+        		ptrManager->tracks_cache = strbuffer_init( 1024 );
+        		char tmp_str[1024];
+
+				TrackDescription_t *TrackList = NULL;
+				ptrManager->Command(g_player, MANAGER_LIST, &TrackList);
+				if( NULL != TrackList)
+				{
+					int i = 0;
+
+					sprintf( tmp_str, "{\"%c_%c\": [", argvBuff[0], argvBuff[1]);
+					strbuffer_add( ptrManager->tracks_cache, tmp_str );
+
+					for (i = 0; TrackList[i].Id >= 0; ++i)
+					{
+						if(0 < i)
+						{
+							strbuffer_add( ptrManager->tracks_cache, ", " );
+						}
+
+						sprintf( tmp_str, "{\"id\":%d,\"e\":\"%s\",\"n\":\"%s\"}", TrackList[i].Id , TrackList[i].Encoding, TrackList[i].Name);
+						strbuffer_add( ptrManager->tracks_cache, tmp_str );
+
+						free(TrackList[i].Encoding);
+						free(TrackList[i].Name);
+					}
+					strbuffer_add( ptrManager->tracks_cache, "]}\n");
+					free(TrackList);
+				}
+				else
+				{
+					// not tracks
+					sprintf( tmp_str, "{\"%c_%c\": []}\n", argvBuff[0], argvBuff[1]);
+					strbuffer_add( ptrManager->tracks_cache, tmp_str );
+				}
+        	}
+        	E2iSendMsg("%s", ptrManager->tracks_cache->buffer );
+
+        	if( tracks_cache_disabled )
+        	{
+        		/* when tracks cache is disabled, then simply clean it's content */
+				strbuffer_free( ptrManager->tracks_cache );
+				ptrManager->tracks_cache = NULL;
+        	}
+
             break;
         }
         case 'c': 
@@ -424,7 +516,7 @@ static int ParseParams(int argc,char* argv[], PlayFiles_t *playbackFiles, int *p
     int digit_optind = 0;
     int aopt = 0, bopt = 0;
     char *copt = 0, *dopt = 0;
-    while ( (c = getopt(argc, argv, "G:W:H:A:V:U:we3dlsrimva:n:x:u:c:h:o:p:P:t:9:0:1:4:f:b:F:S:O:")) != -1) 
+    while ( (c = getopt(argc, argv, "G:W:H:A:V:U:we3dlsrimvCa:n:x:u:c:h:o:p:P:t:9:0:1:4:5:6:7:f:b:F:S:O:T:L:")) != -1)
     {
         switch (c) 
         {
@@ -513,11 +605,7 @@ static int ParseParams(int argc,char* argv[], PlayFiles_t *playbackFiles, int *p
         case 'x':
             if (optarg[0] != '\0')
             {
-                playbackFiles->szSecondFile = malloc(IPTV_MAX_FILE_PATH);
-                playbackFiles->szSecondFile[0] = '\0';
-                strncpy(playbackFiles->szSecondFile, optarg, IPTV_MAX_FILE_PATH-1);
-                playbackFiles->szSecondFile[IPTV_MAX_FILE_PATH] = '\0';
-                map_inter_file_path(playbackFiles->szSecondFile);
+                playbackFiles->szSecondFile = map_inter_file_path(optarg);
             }
             break;
         case 'h':
@@ -526,6 +614,7 @@ static int ParseParams(int argc,char* argv[], PlayFiles_t *playbackFiles, int *p
         case 'u':
             ffmpeg_av_dict_set("user_agent", optarg, 0);
             break;
+
         case 'c':
             printf("For now cookies should be set via headers option!\n");
             ffmpeg_av_dict_set("cookies", optarg, 0);
@@ -542,6 +631,10 @@ static int ParseParams(int argc,char* argv[], PlayFiles_t *playbackFiles, int *p
             printf("Force rtmp protocol implementation\n");
             rtmp_proto_impl_set(atoi(optarg));
             break;
+        case 'C':
+            printf("Disabling tracks cache\n");
+            tracks_cache_disabled = 1;
+            break;
         case '0':
             ffmpeg_av_dict_set("video_rep_index", optarg, 0);
             break;
@@ -553,6 +646,19 @@ static int ParseParams(int argc,char* argv[], PlayFiles_t *playbackFiles, int *p
             flv2mpeg4_converter_set(atoi(optarg));
 #endif
             break;
+
+        case '5':
+            ffmpeg_av_dict_set("cenc_decryption_key", optarg, 0);
+            break;
+
+        case '6':
+            ffmpeg_av_dict_set("cenc_decryption_video_key", optarg, 0);
+            break;
+
+        case '7':
+            ffmpeg_av_dict_set("cenc_decryption_audio_key", optarg, 0);
+            break;
+
         case 'f':
         {
             char *ffopt = strdup(optarg);
@@ -578,13 +684,19 @@ static int ParseParams(int argc,char* argv[], PlayFiles_t *playbackFiles, int *p
         case 'F':
             if (optarg[0] != '\0')
             {
-                playbackFiles->szFirstMoovAtomFile = malloc(IPTV_MAX_FILE_PATH);
-                playbackFiles->szFirstMoovAtomFile[0] = '\0';
-                strncpy(playbackFiles->szFirstMoovAtomFile, optarg, IPTV_MAX_FILE_PATH-1);
-                playbackFiles->szFirstMoovAtomFile[IPTV_MAX_FILE_PATH] = '\0';
-                map_inter_file_path(playbackFiles->szFirstMoovAtomFile);
+                playbackFiles->szFirstMoovAtomFile = map_inter_file_path(optarg);
             }
             break;
+
+        case 'T':
+        	PlaybackHandler.httpTimeout = (uint32_t) strtoul(optarg, NULL, 10);
+            printf("Setting http timeout to %u ms\n", PlaybackHandler.httpTimeout);
+            break;
+
+        case 'L':
+            set_log_level(optarg);
+            break;
+
         default:
             printf ("?? getopt returned character code 0%o ??\n", c);
             ret = -1;
@@ -593,16 +705,7 @@ static int ParseParams(int argc,char* argv[], PlayFiles_t *playbackFiles, int *p
     
     if (0 == ret && optind < argc) 
     {
-        ret = 0;
-        playbackFiles->szFirstFile = malloc(IPTV_MAX_FILE_PATH);
-        playbackFiles->szFirstFile[0] = '\0';
-        if(NULL == strstr(argv[optind], "://"))
-        {
-            strcpy(playbackFiles->szFirstFile, "file://");
-        }
-        strcat(playbackFiles->szFirstFile, argv[optind]);
-        playbackFiles->szFirstFile[IPTV_MAX_FILE_PATH] = '\0';
-        map_inter_file_path(playbackFiles->szFirstFile);
+        playbackFiles->szFirstFile = map_inter_file_path(argv[optind]);
         printf("file: [%s]\n", playbackFiles->szFirstFile);
         ++optind;
     }
@@ -613,6 +716,29 @@ static int ParseParams(int argc,char* argv[], PlayFiles_t *playbackFiles, int *p
     return ret;
 }
 
+/* *********************************************************************** */
+/* This thread is used in init phase because ffmpeg is blocking by default */
+/* *********************************************************************** */
+
+typedef struct
+{
+	PlayFiles_t *playbackFiles;
+	int ret;
+	int init_finished;
+} PlaybackInitParams_t;
+
+static void *PlaybackInitThread(PlaybackInitParams_t *params)
+{
+    char threadname[17];
+    strncpy(threadname, __func__, sizeof(threadname));
+    threadname[16] = 0;
+    prctl (PR_SET_NAME, (unsigned long)&threadname);
+
+	params->ret = g_player->playback->Command(g_player, PLAYBACK_OPEN, params->playbackFiles);
+	params->init_finished = 1;
+	return NULL;
+}
+
 int main(int argc, char* argv[]) 
 {
     pthread_t termThread;
@@ -620,22 +746,23 @@ int main(int argc, char* argv[])
     
     int audioTrackIdx = -1;
     int subtitleTrackIdx = -1;
+    int pts_check_nr = 0;
     
     uint32_t linuxDvbBufferSizeMB = 0; 
     
-    char argvBuff[2048];
+    char argvBuff[256];
     memset(argvBuff, '\0', sizeof(argvBuff));
     int commandRetVal = -1;
 
     /* inform client that we can handle additional commands */
-    E2iSendMsg("{\"EPLAYER3_EXTENDED\":{\"version\":%d}}\n", 69);
+    E2iSendMsg("{\"EPLAYER3_EXTENDED\":{\"version\":%d}}\n", 177);
 
     PlayFiles_t playbackFiles;
     memset(&playbackFiles, 0x00, sizeof(playbackFiles));
 
     if (0 != ParseParams(argc, argv, &playbackFiles, &audioTrackIdx, &subtitleTrackIdx, &linuxDvbBufferSizeMB))
     {
-        printf("Usage: exteplayer3 filePath [-u user-agent] [-c cookies] [-h headers] [-p prio] [-a] [-d] [-w] [-l] [-s] [-i] [-t audioTrackId] [-9 subtitleTrackId] [-x separateAudioUri] plabackUri\n");
+        printf("Usage: exteplayer3 filePath [-u user-agent] [-c cookies] [-h headers] [-p prio] [-a] [-d] [-w] [-l] [-s] [-i] [-C] [-T timeout] [-L desc] [-t audioTrackId] [-9 subtitleTrackId] [-x separateAudioUri] plabackUri\n");
         printf("[-b size] Linux DVB output buffer size in MB\n");
         printf("[-a 0|1|2|3] AAC software decoding - 1 bit - AAC ADTS, 2 - bit AAC LATM\n");
         printf("[-e] EAC3 software decoding\n");
@@ -651,6 +778,9 @@ int main(int argc, char* argv[])
 #ifdef HAVE_FLV2MPEG4_CONVERTER
         printf("[-4 0|1] - disable/enable flv2mpeg4 converter\n");
 #endif
+        printf("[-C] disable tracks info cache\n");
+        printf("[-T] set http timeout\n");
+        printf("[-L desc] description of debug level to change in format NAME:INT_VALUE\n");
         printf("[-i] play in infinity loop\n");
         printf("[-v] switch to live TS stream mode\n");
         printf("[-n 0|1|2] rtmp force protocol implementation auto(0) native/ffmpeg(1) or librtmp(2)\n");
@@ -665,6 +795,9 @@ int main(int argc, char* argv[])
         printf("[-x separateAudioUri]\n");
         printf("[-0 idx] video MPEG-DASH representation index\n");
         printf("[-1 idx] audio MPEG-DASH representation index\n");
+        printf("[-5 idx] all stream MPEG-DASH cenc decryption key\n");
+        printf("[-6 idx] video MPEG-DASH stream index cenc decryption key\n");
+        printf("[-7 idx] audio MPEG-DASH stream index cenc decryption key\n");
         printf("[-f ffopt=ffval] any other ffmpeg option\n");
         printf("[-F path to additional file with moov atom data (used for mp4 playback in progressive download mode)\n");
         printf("[-O moov atom offset in the original file (used for mp4 playback in progressive download mode)\n");
@@ -675,6 +808,10 @@ int main(int argc, char* argv[])
         exit(1);
     }
     
+    ffmpeg_av_dict_set("fake_last_subtitle", "1", 0);
+
+    process_suburi(&playbackFiles);
+
     g_player = malloc(sizeof(Context_t));
     if(NULL == g_player)
     {
@@ -736,7 +873,60 @@ int main(int argc, char* argv[])
         g_player->playback->noprobe = 1;
     }
 
-    commandRetVal = g_player->playback->Command(g_player, PLAYBACK_OPEN, &playbackFiles);
+    /*
+    PLAYBACK_OPEN can block (possibly forever) when for example network source is not available or returns invalid data and it is not possible to guess used codec (simulated using hls)
+    During this state it is not possible to stop the player
+
+    This dirty hack solves this by running PLAYBACK_OPEN in a thread and runs a very simple loop that waits only for quit command from ServiceApp.
+    It is not possible to run full command loop, because we don't have enough info about stream in this state and some commands will crash.
+
+    This is very ugly solution, but it works ...
+    */
+
+//    commandRetVal = g_player->playback->Command(g_player, PLAYBACK_OPEN, &playbackFiles);
+    {
+    	pthread_t itid;
+    	pthread_attr_t tattr;
+    	PlaybackInitParams_t params;
+
+    	memset( &params, 0, sizeof( PlaybackInitParams_t ));
+    	params.playbackFiles = &playbackFiles;
+    	pthread_attr_init(&tattr);
+    	pthread_attr_setdetachstate(&tattr, 1);
+    	pthread_create(&itid, &tattr, (void * (*)(void *)) PlaybackInitThread, (void *) &params);
+
+    	while( params.init_finished == 0 )
+    	{
+            if( NULL == fgets(argvBuff, sizeof(argvBuff)-1 , stdin) )
+            {
+                /* wait for data - max 1s */
+                kbhit();
+                continue;
+            }
+
+            if(0 == argvBuff[0])
+            {
+                continue;
+            }
+
+            switch(argvBuff[0])
+            {
+				case 'q':
+				{
+					/* received stop command during init state, co just cancel init thread and quit */
+			    	pthread_cancel(itid);
+			    	exit(11);
+				}
+				break;
+
+				default:
+					break;
+            }
+    	}
+
+    	commandRetVal = params.ret;
+    }
+
     E2iSendMsg("{\"PLAYBACK_OPEN\":{\"OutputName\":\"%s\", \"file\":\"%s\", \"sts\":%d}}\n", g_player->output->Name, playbackFiles.szFirstFile, commandRetVal);
     if(commandRetVal < 0)
     {
@@ -976,6 +1166,17 @@ int main(int argc, char* argv[])
                         E2iSendMsg("{\"J\":{\"ms\":%"PRId64"}}\n", pts / 90);
                     }
                 }
+
+                pts_check_nr++;
+
+                if( pts_check_nr > 10 )
+                {
+                    pts_check_nr = 0;
+                    int64_t length = 0;
+                    commandRetVal = g_player->playback->Command(g_player, PLAYBACK_LENGTH, (void*)&length);
+                    E2iSendMsg("{\"PLAYBACK_LENGTH\":{\"length\":%"PRId64", \"sts\":%d}}\n", length, commandRetVal);
+                }
+
                 break;
             }
             case 'i':
