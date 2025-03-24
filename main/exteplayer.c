@@ -261,6 +261,7 @@ static char *map_inter_file_path(const char *filename)
     param = strstr(filename, ".mpd&");
     if (param)
     {
+        strcpy(ret, filename);
         int pos = param - filename;
         param+=5;
         int len = strlen(param)+1;
@@ -303,7 +304,7 @@ static char *map_inter_file_path(const char *filename)
             }
             idx++;
         }
-        filename[pos+4] = '\0';
+        ret[pos+4] = '\0';
     }
 
     return ret;
