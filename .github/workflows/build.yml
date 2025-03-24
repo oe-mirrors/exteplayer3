@@ -64,6 +64,8 @@ jobs:
         external/flv2mpeg4/src/dcprediction.c \
         external/flv2mpeg4/src/flv2mpeg4.c \
         external/plugins/src/png.c \
+        tools/strbuffer.c \
+        tools/debug.c \
         "
 
         gcc $SOURCE_FILES \
