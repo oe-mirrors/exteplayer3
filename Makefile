@@ -23,6 +23,8 @@ SOURCE_FILES := \
     output/linuxdvb_buffering.c \
     output/graphic_subtitle.c \
     playback/playback.c \
+    tools/debug.c \
+    tools/strbuffer.c \
     external/ffmpeg/src/bitstream.c \
     external/ffmpeg/src/latmenc.c \
     external/ffmpeg/src/mpeg4audio.c \
