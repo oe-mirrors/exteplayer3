@@ -64,25 +64,6 @@ jobs:
         external/flv2mpeg4/src/dcprediction.c \
         external/flv2mpeg4/src/flv2mpeg4.c \
         external/plugins/src/png.c \
-        output/linuxdvb_mipsel.c \
-        output/writer/mipsel/writer.c \
-        output/writer/mipsel/aac.c \
-        output/writer/mipsel/ac3.c \
-        output/writer/mipsel/bcma.c \
-        output/writer/mipsel/mp3.c \
-        output/writer/mipsel/pcm.c \
-        output/writer/mipsel/lpcm.c \
-        output/writer/mipsel/dts.c \
-        output/writer/mipsel/amr.c \
-        output/writer/mipsel/h265.c \
-        output/writer/mipsel/h264.c \
-        output/writer/mipsel/mjpeg.c \
-        output/writer/mipsel/mpeg2.c \
-        output/writer/mipsel/mpeg4.c \
-        output/writer/mipsel/divx3.c \
-        output/writer/mipsel/vp.c \
-        output/writer/mipsel/wmv.c \
-        output/writer/mipsel/vc1.c \
         "
 
         gcc $SOURCE_FILES \
