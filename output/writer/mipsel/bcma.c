@@ -99,7 +99,7 @@ static int writeData(void *_call)
     pcmPrivateData_t *pcmPrivateData  = (pcmPrivateData_t*)call->private_data;
 
     uint32_t headerSize = InsertPesHeader(PesHeader, call->len, MPEG_AUDIO_PES_START_CODE, call->Pts, 0);
-    
+
     if (pcmPrivateData->codec_id == AV_CODEC_ID_VORBIS) {
 
         if (avpriv_split_xiph_headers(pcmPrivateData->private_data, pcmPrivateData->private_size, 30, vorbis_header_start, vorbis_header_len) < 0) {

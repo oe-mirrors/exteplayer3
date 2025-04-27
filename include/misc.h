@@ -38,7 +38,7 @@ typedef enum {
 /* ***************************** */
 void PutBits(BitPacker_t * ld, uint32_t code, uint32_t length);
 void FlushBits(BitPacker_t * ld);
-int8_t PlaybackDieNow(int8_t val); 
+int8_t PlaybackDieNow(int8_t val);
 stb_type_t GetSTBType();
 
 /* ***************************** */
@@ -47,7 +47,7 @@ stb_type_t GetSTBType();
 
 static inline char *getExtension(char * name)
 {
-    if (name) 
+    if (name)
     {
         char *ext = strrchr(name, '.');
         if (ext)

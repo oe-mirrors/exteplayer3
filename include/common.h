@@ -9,8 +9,8 @@
 #include "playback.h"
 #include <pthread.h>
 
-typedef struct PlayFiles_t 
-{ 
+typedef struct PlayFiles_t
+{
     char *szFirstFile;
     char *szSecondFile;
     char *szFirstMoovAtomFile;
@@ -21,7 +21,7 @@ typedef struct PlayFiles_t
     uint64_t iSecondMoovAtomOffset;
 } PlayFiles_t;
 
-typedef struct Context_s 
+typedef struct Context_s
 {
     PlaybackHandler_t	*playback;
     ContainerHandler_t	*container;

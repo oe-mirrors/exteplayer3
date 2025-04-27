@@ -1,9 +1,9 @@
 /*
  * bcm_ioctls.h
  *
- * 
  *
- * 
+ *
+ *
  */
 
 #ifndef H_DVB_BCM_H

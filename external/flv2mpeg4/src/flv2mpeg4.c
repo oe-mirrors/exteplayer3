@@ -29,7 +29,7 @@
 #include "m4vencode.h"
 #include "../flv2mpeg4.h"
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 typedef struct _CONVCTX
 {
     int width;
@@ -42,7 +42,7 @@ typedef struct _CONVCTX
 } CONVCTX;
 
 
-typedef struct 
+typedef struct
 {
     uint8   *out_buf;
     M4V_VOL  vol;
@@ -52,7 +52,7 @@ typedef struct
 #define VOL_TIME_BITS		5
 #define	PACKETBUFFER_SIZE	(256*1024*4)
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 static const uint8 ff_mpeg4_y_dc_scale_table[32]={
 //  0  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31
     0, 8, 8, 8, 8,10,12,14,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,34,36,38,40,42,44,46
@@ -134,19 +134,19 @@ static int write_pad_not_coded_frames(flv2mpeg4_CTX *pub_ctx, CONVCTX *c, BW *bw
         m4v_stuffing(bw);
 
         flash_bw(bw);
-        
+
         // write frame
-        if (pub_ctx->write_packet_cb(pub_ctx->usr_data, 
-            0, 
-            0,//c->frame, 
-            bw->buf, 
+        if (pub_ctx->write_packet_cb(pub_ctx->usr_data,
+            0,
+            0,//c->frame,
+            bw->buf,
             bw->pos) < 0)
         {
             return -1;
         }
 
         clear_bw(bw);
-        
+
         c->frame++;
         c->icounter++;
     }
@@ -167,7 +167,7 @@ static int write_m4v_picture_frame(flv2mpeg4_CTX *pub_ctx, CONVCTX *c, BR *br, B
 
     copy_vop(flvpic, &vop, c);
     m4v_encode_vop_header(bw, &vop, VOL_TIME_BITS, 0);
-        
+
     // transcode flv to mpeg4
     for (y = 0; y < mb_height; y++)
     {
@@ -175,7 +175,7 @@ static int write_m4v_picture_frame(flv2mpeg4_CTX *pub_ctx, CONVCTX *c, BR *br, B
         {
             memset(&mb, 0, sizeof(mb));
             memset(&m4v_mb, 0, sizeof(m4v_mb));
-            
+
             if (vop.picture_type == M4V_I_TYPE)
             {
                 mb.intra = 1;
@@ -200,10 +200,10 @@ static int write_m4v_picture_frame(flv2mpeg4_CTX *pub_ctx, CONVCTX *c, BR *br, B
     flash_bw(bw);
 
     // write frame
-    if (pub_ctx->write_packet_cb(pub_ctx->usr_data, 
-        vop.picture_type == M4V_I_TYPE, 
-        0,//c->frame, 
-        bw->buf, 
+    if (pub_ctx->write_packet_cb(pub_ctx->usr_data,
+        vop.picture_type == M4V_I_TYPE,
+        0,//c->frame,
+        bw->buf,
         bw->pos) < 0)
     {
         return -1;
@@ -276,7 +276,7 @@ int flv2mpeg4_prepare_extra_data(flv2mpeg4_CTX *ctx)
     flash_bw(&bw);
 
     alloc_dcpred(&c->vol.dcpred, (c->width+15) / 16, (c->height+15) / 16);
-    
+
     return ctx->write_extradata_cb(ctx->usr_data, c->width, c->height, 200 * 1000, bw.buf, bw.pos);
 }
 
@@ -297,20 +297,20 @@ flv2mpeg4_CTX *flv2mpeg4_init_ctx(void *priv_data, int width, int height, flv2mp
     pub_ctx->priv = malloc(sizeof(CTX));
     memset(pub_ctx->priv, 0x0, sizeof(CTX));
     CTX *ctx = pub_ctx->priv;
-    
+
     ctx->conv.width  = width;
     ctx->conv.height = height;
     ctx->out_buf = malloc(PACKETBUFFER_SIZE);
     memset(ctx->out_buf, 0x0, PACKETBUFFER_SIZE);
     memset(&(ctx->vol), 0x0, sizeof(ctx->vol));
-    
+
     return pub_ctx;
 }
 
 void flv2mpeg4_release_ctx(flv2mpeg4_CTX **pub_ctx)
 {
     CTX *ctx = (*pub_ctx)->priv;
-    
+
     free_dcpred(&ctx->conv.vol.dcpred);
     free(ctx->out_buf);
     free(ctx);

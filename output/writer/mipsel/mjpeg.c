@@ -127,7 +127,7 @@ static int writeDataBCMV(WriterAVCallData_t *call)
     // pes header
     if (pes_header_len != WriteExt(call->WriteV, call->fd, PesHeader, pes_header_len)) return -1;
     if (bytes != WriteExt(call->WriteV, call->fd, call->data, bytes)) return -1;
-    
+
     offs += bytes;
 
     while (bytes < call->len)
@@ -174,7 +174,7 @@ static int writeData(void *_call)
         return writeDataSimple(_call);
     }
 
-    return writeDataBCMV(call); 
+    return writeDataBCMV(call);
 }
 
 /* ***************************** */

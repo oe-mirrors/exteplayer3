@@ -207,7 +207,7 @@ static int writeData(void* _call)
                 PrivateHeaderLength     = InsertVideoPrivateDataHeader (&PesHeader[HeaderLength],
                                           call->len);
                 /* Update PesLength */
-                PesLength               = PesHeader[PES_LENGTH_BYTE_0] + 
+                PesLength               = PesHeader[PES_LENGTH_BYTE_0] +
                                             (PesHeader[PES_LENGTH_BYTE_1] << 8) + PrivateHeaderLength;
                 PesHeader[PES_LENGTH_BYTE_0]            = PesLength & 0xff;
                 PesHeader[PES_LENGTH_BYTE_1]            = (PesLength >> 8) & 0xff;
