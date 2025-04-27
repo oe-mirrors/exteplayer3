@@ -42,11 +42,11 @@
 /* Types                         */
 /* ***************************** */
 typedef enum {
-    DVB_STS_UNKNOWN, 
-    DVB_STS_SEEK, 
-    DVB_STS_PAUSE, 
+    DVB_STS_UNKNOWN,
+    DVB_STS_SEEK,
+    DVB_STS_PAUSE,
     DVB_STS_EXIT
-} DVBState_t; 
+} DVBState_t;
 
 /* ***************************** */
 /* Varaibles                     */
@@ -114,37 +114,37 @@ ssize_t WriteWithRetry(Context_t *context, int pipefd, int fd, void *pDVBMtx, co
         FD_SET(pipefd, &rfds);
         FD_SET(fd, &wfds);
 
-        /* When we PAUSE LINUX DVB outputs buffers, then audio/video buffers 
-         * will continue to be filled. Unfortunately, in such case after resume 
+        /* When we PAUSE LINUX DVB outputs buffers, then audio/video buffers
+         * will continue to be filled. Unfortunately, in such case after resume
          * select() will never return with fd set - bug in DVB drivers?
          * There are to workarounds possible:
          *   1. write to pipe at resume to return from select() immediately
          *   2. make timeout select(), limit max time spend in the select()
-         *      to for example 0,1s 
+         *      to for example 0,1s
          *   (at now first workaround is used)
          */
         //tv.tv_sec = 0;
         //tv.tv_usec = 100000; // 100ms
-        
+
         retval = select(maxFd + 1, &rfds, &wfds, NULL, NULL); //&tv);
         if (retval < 0)
         {
             break;
         }
-        
+
         //if (retval == 0)
         //{
         //    //printf("RETURN FROM SELECT DUE TO TIMEOUT\n");
         //    continue;
         //}
-        
+
         if(FD_ISSET(pipefd, &rfds))
         {
             FlushPipe(pipefd);
             //printf("RETURN FROM SELECT DUE TO pipefd SET\n");
             continue;
         }
-        
+
         if(FD_ISSET(fd, &wfds))
         {
             ret = write(fd, buf, size);
@@ -163,7 +163,7 @@ ssize_t WriteWithRetry(Context_t *context, int pipefd, int fd, void *pDVBMtx, co
                 {
                     break;
                 }
-                
+
                 return ret;
             }
             else if (ret == 0)
@@ -177,7 +177,7 @@ ssize_t WriteWithRetry(Context_t *context, int pipefd, int fd, void *pDVBMtx, co
                     FlushPipe(pipefd);
                 continue;
             }
-            
+
             size -= ret;
             buf += ret;
         }
@@ -209,15 +209,15 @@ ssize_t write_with_retry(int fd, const void *buf, int size)
                 break;
             }
         }
-            
+
         if (ret < 0)
         {
             return ret;
         }
-        
+
         size -= ret;
         buf += ret;
-        
+
         if(size > 0)
         {
             if( usleep(1000) )
@@ -229,13 +229,13 @@ ssize_t write_with_retry(int fd, const void *buf, int size)
     return 0;
 }
 
-ssize_t writev_with_retry(int fd, const struct iovec *iov, int ic) 
+ssize_t writev_with_retry(int fd, const struct iovec *iov, int ic)
 {
     ssize_t len = 0;
     int i = 0;
     for(i=0; i<ic; ++i)
     {
-        write_with_retry(fd, iov[i].iov_base, iov[i].iov_len); 
+        write_with_retry(fd, iov[i].iov_base, iov[i].iov_len);
         len += iov[i].iov_len;
         if(PlaybackDieNow(0))
         {

@@ -87,7 +87,7 @@ static int writeData(void *_call)
         amr_err("call error wrong data call: %p, data: %p, len: %d, fd: %d\n", call, call->data, call->len, call->fd);
         return 0;
     }
-    
+
     amr_printf(10, "AudioPts %lld\n", call->Pts);
 
     size_t payload_len = call->len;
@@ -120,7 +120,7 @@ static int writeData(void *_call)
     iov[0].iov_len = headerSize;
     iov[1].iov_base = call->data;
     iov[1].iov_len = call->len;
-    
+
     int len = call->WriteV(call->fd, iov, 2);
 
     amr_printf(10, "amr_Write-< len=%d\n", len);

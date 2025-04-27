@@ -113,7 +113,7 @@ static int32_t writeData(void* _call)
     int32_t pos = 0;
     while ((pos + 4) <= Size)
     {
-        // check for DTS-HD 
+        // check for DTS-HD
         if (!strcmp((char*)(Data + pos), "\x64\x58\x20\x25"))
         {
             Size = pos;
@@ -122,7 +122,7 @@ static int32_t writeData(void* _call)
         ++pos;
     }
 #endif
-    
+
 // #define DO_BYTESWAP
 #ifdef DO_BYTESWAP
     /* 16-bit byte swap all data before injecting it */

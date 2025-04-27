@@ -67,7 +67,7 @@
 static unsigned char           Head[] = {0, 0, 0, 1};
 static int                     initialHeader = 1;
 static unsigned int            NalLengthBytes = 1;
-static unsigned char           *CodecData     = NULL; 
+static unsigned char           *CodecData     = NULL;
 static unsigned int            CodecDataLen   = 0;
 /* ***************************** */
 /* Prototypes                    */
@@ -94,18 +94,18 @@ static int32_t PreparCodecData(unsigned char *data, unsigned int cd_len, unsigne
             if (cd_len > 22)
             {
                 int i;
-                if (data[0] != 0) 
+                if (data[0] != 0)
                 {
                     h265_printf(10, "Unsupported extra data version %d, decoding may fail", (int)data[0]);
                 }
-                
+
                 *NalLength = (data[21] & 3) + 1;
                 int num_param_sets = data[22];
                 int pos = 23;
                 for (i = 0; i < num_param_sets; i++)
                 {
                     int j;
-                    if (pos + 3 > cd_len) 
+                    if (pos + 3 > cd_len)
                     {
                         h265_printf(10, "Buffer underrun in extra header (%d >= %u)", pos + 3, cd_len);
                         break;
@@ -142,7 +142,7 @@ static int32_t PreparCodecData(unsigned char *data, unsigned int cd_len, unsigne
                         pos += nal_size;
                     }
                 }
-                
+
                 CodecData = malloc(tmp_len);
                 memcpy(CodecData, tmp, tmp_len);
                 CodecDataLen = tmp_len;
@@ -153,7 +153,7 @@ static int32_t PreparCodecData(unsigned char *data, unsigned int cd_len, unsigne
     {
         *NalLength = 0;
     }
-    
+
     return ret;
 }
 
@@ -185,7 +185,7 @@ static int writeData(void* _call)
     TimeDelta = call->FrameRate;
     TimeScale = call->FrameScale;
     VideoPts  = call->Pts;
-    
+
     h265_printf(20, "VideoPts %lld - %d %d\n", call->Pts, TimeDelta, TimeScale);
 
     if ((call->data == NULL) || (call->len <= 0))
@@ -199,16 +199,16 @@ static int writeData(void* _call)
         h264_err("file pointer < 0. ignoring ...\n");
         return 0;
     }
-    
+
     if( call->InfoFlags & 0x1) // TS container
     {
         h265_printf(10, "H265 simple inject method!\n");
         uint32_t PacketLength = 0;
         uint32_t FakeStartCode = (call->Version << 8) | PES_VERSION_FAKE_START_CODE;
-        
+
         iov[ic++].iov_base = PesHeader;
         initialHeader = 0;
-        if (initialHeader) 
+        if (initialHeader)
         {
             initialHeader = 0;
             iov[ic].iov_base  = call->private_data;
@@ -218,21 +218,21 @@ static int writeData(void* _call)
 
         iov[ic].iov_base = "";
         iov[ic++].iov_len = 1;
-        
+
         iov[ic].iov_base  = call->data;
         iov[ic++].iov_len = call->len;
         PacketLength     += call->len;
-        
+
         iov[0].iov_len = InsertPesHeader(PesHeader, -1, MPEG_VIDEO_PES_START_CODE, VideoPts, FakeStartCode);
-        
+
         return call->WriteV(call->fd, iov, ic);
     }
 
     uint32_t PacketLength = 0;
-    
+
     ic = 0;
     iov[ic++].iov_base = PesHeader;
-    
+
     if (initialHeader)
     {
         if (CodecData)
@@ -240,12 +240,12 @@ static int writeData(void* _call)
             free(CodecData);
             CodecData = NULL;
         }
-        
+
         uint8_t  *private_data = call->private_data;
         uint32_t  private_size = call->private_size;
-    
+
         PreparCodecData(private_data, private_size, &NalLengthBytes);
-        
+
         if (CodecData != NULL)
         {
             iov[ic].iov_base  = CodecData;
@@ -266,7 +266,7 @@ static int writeData(void* _call)
                 exit(-1);
                 break;
             }
-            
+
             uint32_t pack_len = 0;
             uint32_t i = 0;
             for (i = 0; i < NalLengthBytes; i++, pos++)
@@ -274,27 +274,27 @@ static int writeData(void* _call)
                 pack_len <<= 8;
                 pack_len += call->data[pos];
             }
-            
+
             if ( (pos + pack_len) > call->len )
             {
                 pack_len = call->len - pos;
             }
-            
+
             iov[ic].iov_base  = Head;
             iov[ic++].iov_len = sizeof(Head);
             PacketLength += sizeof(Head);
-            
+
             iov[ic].iov_base  = call->data + pos;
             iov[ic++].iov_len = pack_len;
             PacketLength     += pack_len;
-    
+
             pos += pack_len;
-            
+
         } while ((pos + NalLengthBytes) < call->len);
-        
+
         h265_printf (10, "<<<< PacketLength [%d]\n", PacketLength);
         iov[0].iov_len = InsertPesHeader(PesHeader, -1, MPEG_VIDEO_PES_START_CODE, VideoPts, 0);
-        
+
         len = call->WriteV(call->fd, iov, ic);
         PacketLength += iov[0].iov_len;
         if (PacketLength != len)
@@ -310,7 +310,7 @@ static int writeData(void* _call)
 static int writeReverseData(void* _call)
 {
     WriterAVCallData_t* call = (WriterAVCallData_t*) _call;
-    
+
     return 0;
 }
 /* ***************************** */

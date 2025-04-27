@@ -109,7 +109,7 @@ static int writeData(void* _call)
     int len = 0;
     vc1_printf(10, "\n");
 
-    if (call == NULL) 
+    if (call == NULL)
     {
         vc1_err("call data is NULL...\n");
         return 0;
@@ -141,14 +141,14 @@ static int writeData(void* _call)
         vc1_printf(10, "Framerate: %u\n", call->FrameRate);
         vc1_printf(10, "biWidth: %d\n",   call->Width);
         vc1_printf(10, "biHeight: %d\n",  call->Height);
-        
+
         crazyFramerate = ((10000000.0 / call->FrameRate) * 1000.0);
         vc1_printf(10, "crazyFramerate: %u\n", crazyFramerate);
-        
+
         memset(PesPayload, 0, sizeof(PesPayload));
-        
+
         PesPtr = PesPayload;
-        
+
         memcpy(PesPtr, SequenceLayerStartCode, sizeof(SequenceLayerStartCode));
         PesPtr += sizeof(SequenceLayerStartCode);
 
@@ -189,12 +189,12 @@ static int writeData(void* _call)
         initialHeader = 0;
     }
 
-    if(call->len > 0 && call->data) 
+    if(call->len > 0 && call->data)
     {
         uint32_t Position = 0;
         uint8_t insertSampleHeader = 1;
 
-        while(Position < call->len) 
+        while(Position < call->len)
         {
 
             int32_t PacketLength = (call->len - Position) <= MAX_PES_PACKET_SIZE ?
@@ -207,7 +207,7 @@ static int writeData(void* _call)
             uint8_t PesHeader[PES_MAX_HEADER_SIZE];
             int32_t HeaderLength = InsertPesHeader (PesHeader, PacketLength, VC1_VIDEO_PES_START_CODE, call->Pts, 0);
 
-            if(insertSampleHeader) 
+            if(insertSampleHeader)
             {
                 const uint8_t Vc1FrameStartCode[] = {0, 0, 1, VC1_FRAME_START_CODE};
 
@@ -215,7 +215,7 @@ static int writeData(void* _call)
                 {
                     FrameHeaderSeen = 1;
                 }
-                
+
                 if (!FrameHeaderSeen)
                 {
                     memcpy (&PesHeader[HeaderLength], Vc1FrameStartCode, sizeof(Vc1FrameStartCode));
@@ -231,7 +231,7 @@ static int writeData(void* _call)
             iov[1].iov_len = PacketLength;
 
             ssize_t l = call->WriteV(call->fd, iov, 2);
-            if (l < 0) 
+            if (l < 0)
             {
                 len = l;
                 break;
