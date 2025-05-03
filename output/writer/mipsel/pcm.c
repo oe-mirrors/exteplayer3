@@ -115,7 +115,7 @@ static int32_t writeData(void *_call)
     pcmPrivateData_t *pcmPrivateData  = (pcmPrivateData_t*)call->private_data;
     uint8_t *buffer = call->data;
     uint32_t   size = call->len;
-    
+
     if( pcmPrivateData->bResampling || NULL == fixed_buffer )
     {
         int32_t width = 0;
@@ -126,7 +126,7 @@ static int32_t writeData(void *_call)
         int32_t byterate = 0;
 
         uint32_t codecID   = (uint32_t)pcmPrivateData->codec_id;
-        
+
         uint8_t dataPrecision = 0;
         uint8_t LE = 0;
         switch (codecID)
@@ -159,10 +159,10 @@ static int32_t writeData(void *_call)
             default:
                 break;
         }
-        
+
         uint8_t *data = codec_data;
         uint16_t format = LE ? 0x0001 : 0x0100;
-        
+
         byterate = channels * rate * width / 8;
         block_align = channels * width / 8;
         memset(data, 0, sizeof(codec_data));
@@ -188,12 +188,12 @@ static int32_t writeData(void *_call)
         /* word size */
         *(data++) = depth & 0xff;
         *(data++) = (depth >> 8) & 0xff;
-        
+
         uint32_t nfixed_buffersize = rate * 30 / 1000;
         nfixed_buffersize *= channels * depth / 8;
         fixed_buffertimestamp = call->Pts;
         fixed_bufferduration = 90000 * nfixed_buffersize /  byterate;
-        
+
         if(fixed_buffersize != nfixed_buffersize || NULL == fixed_buffer)
         {
             fixed_buffersize = nfixed_buffersize;
@@ -206,9 +206,9 @@ static int32_t writeData(void *_call)
         fixed_bufferfilled = 0;
         pcm_printf(40, "PCM fixed_buffersize [%u] [%s]\n", fixed_buffersize, LE ? "LE":"BE");
     }
-    
+
     while (size > 0)
-    {        
+    {
         uint32_t cpSize = (fixed_buffersize - fixed_bufferfilled);
         if(cpSize > size)
         {
@@ -216,12 +216,12 @@ static int32_t writeData(void *_call)
             fixed_bufferfilled += size;
             return size;
         }
-        
+
         memcpy(fixed_buffer + fixed_bufferfilled, buffer, cpSize);
         fixed_bufferfilled = 0;
         buffer += cpSize;
         size -= cpSize;
-        
+
         uint32_t addHeaderSize = 0;
         if( STB_DREAMBOX == GetSTBType() )
         {
@@ -240,7 +240,7 @@ static int32_t writeData(void *_call)
         PesHeader[headerSize++] = (fixed_buffersize >> 16) & 0xff;
         PesHeader[headerSize++] = (fixed_buffersize >> 8)  & 0xff;
         PesHeader[headerSize++] = fixed_buffersize & 0xff;
-        
+
         memcpy(PesHeader + headerSize, codec_data, sizeof(codec_data));
         headerSize += sizeof(codec_data);
 
@@ -254,7 +254,7 @@ static int32_t writeData(void *_call)
         call->WriteV(call->fd, iov, 2);
         fixed_buffertimestamp += fixed_bufferduration;
     }
-    
+
     return size;
 }
 
@@ -262,7 +262,7 @@ static int32_t writeData(void *_call)
 /* Writer  Definition            */
 /* ***************************** */
 
-static WriterCaps_t caps_pcm = 
+static WriterCaps_t caps_pcm =
 {
     "pcm",
     eAudio,
@@ -272,7 +272,7 @@ static WriterCaps_t caps_pcm =
     -1
 };
 
-struct Writer_s WriterAudioPCM = 
+struct Writer_s WriterAudioPCM =
 {
     &reset,
     &writeData,
@@ -280,7 +280,7 @@ struct Writer_s WriterAudioPCM =
     &caps_pcm
 };
 
-static WriterCaps_t caps_ipcm = 
+static WriterCaps_t caps_ipcm =
 {
     "ipcm",
     eAudio,
@@ -290,7 +290,7 @@ static WriterCaps_t caps_ipcm =
     -1
 };
 
-struct Writer_s WriterAudioIPCM = 
+struct Writer_s WriterAudioIPCM =
 {
     &reset,
     &writeData, /* writeDataIPCM */

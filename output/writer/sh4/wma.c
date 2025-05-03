@@ -113,7 +113,7 @@ static int writeData(void* _call)
             wma_err("private NULL.\n");
             return -1;
         }
-        
+
         struct iovec iov[2];
         iov[0].iov_base = PesHeader;
         iov[0].iov_len = InsertPesHeader (PesHeader, call->private_size, MPEG_AUDIO_PES_START_CODE, 0, 0);

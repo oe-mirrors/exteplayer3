@@ -67,7 +67,7 @@ static uint32_t SubFrameLen = 0;
 static uint32_t SubFramesPerPES = 0;
 
 // reference: search for TypeLpcmDVDAudio in player/frame_parser/frame_parser_audio_lpcm.cpp
-static const uint8_t clpcm_prv[14] = 
+static const uint8_t clpcm_prv[14] =
 {
     0xA0,   //sub_stream_id
     0, 0,   //resvd and UPC_EAN_ISRC stuff, unused
@@ -143,7 +143,7 @@ static int32_t prepareClipPlay(int32_t uNoOfChannels, int32_t uSampleRate, int32
     //set number of channels
     lpcm_prv[10] = uNoOfChannels - 1;
 
-    switch(uBitsPerSample) 
+    switch(uBitsPerSample)
     {
         case 24:
             lpcm_prv[7] |= 0x20;
@@ -268,7 +268,7 @@ static int32_t writeData(void *_call)
         iov[2].iov_len = SubFrameLen;
 
         //write the PCM data
-        if(16 == pcmPrivateData->bits_per_coded_sample) 
+        if(16 == pcmPrivateData->bits_per_coded_sample)
         {
             for(n=0; n<SubFrameLen; n+=2)
             {
@@ -277,7 +277,7 @@ static int32_t writeData(void *_call)
                 injectBuffer[n]=injectBuffer[n+1];
                 injectBuffer[n+1]=tmp;
             }
-        } 
+        }
         else
         {
             //      0   1   2   3   4   5   6   7   8   9  10  11

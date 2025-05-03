@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <stdint.h>
 #include "strbuffer.h"
- 
+
 typedef enum {
     MANAGER_ADD,
     MANAGER_LIST,
@@ -45,7 +45,7 @@ typedef struct Track_s {
     int32_t               version;
     long long int         pts;
     long long int         dts;
-    
+
     /* for later use: */
     eTrackTypeEplayer     type;
     int                   width;
@@ -73,7 +73,7 @@ typedef struct Track_s {
     int                   pending;
 } Track_t;
 
-typedef struct TrackDescription_s 
+typedef struct TrackDescription_s
 {
     int                   Id;
     char *                Name;
@@ -84,10 +84,10 @@ typedef struct TrackDescription_s
     int32_t               aspect_ratio_num;
     int32_t               aspect_ratio_den;
     int                   progressive;
-    
+
 } TrackDescription_t;
 
-typedef struct Manager_s 
+typedef struct Manager_s
 {
     char * Name;
     int (* Command) (/*Context_t*/void  *, ManagerCmd_t, void *);
@@ -96,7 +96,7 @@ typedef struct Manager_s
 
 } Manager_t;
 
-typedef struct ManagerHandler_s 
+typedef struct ManagerHandler_s
 {
     char *Name;
     Manager_t *audio;

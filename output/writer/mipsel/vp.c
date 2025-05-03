@@ -79,19 +79,19 @@ static int writeData(void *_call, bool is_vp6, bool is_vp9)
     WriterAVCallData_t* call = (WriterAVCallData_t*) _call;
     vp_printf(10, "\n");
 
-    if (call == NULL) 
+    if (call == NULL)
     {
         vp_err("call data is NULL...\n");
         return 0;
     }
 
-    if ((call->data == NULL) || (call->len <= 0)) 
+    if ((call->data == NULL) || (call->len <= 0))
     {
         vp_err("parsing NULL Data. ignoring...\n");
         return 0;
     }
 
-    if (call->fd < 0) 
+    if (call->fd < 0)
     {
         vp_err("file pointer < 0. ignoring ...\n");
         return 0;
@@ -102,18 +102,18 @@ static int writeData(void *_call, bool is_vp6, bool is_vp9)
 
     struct iovec iov[2];
     uint64_t pts = is_vp9 && STB_VUPLUS == GetSTBType() ? 0 : call->Pts;
-    
+
     iov[0].iov_base = PesHeader;
     uint32_t pes_header_len = InsertPesHeader(PesHeader, call->len, MPEG_VIDEO_PES_START_CODE, pts, 0);
     uint32_t len = call->len + 4 + 6;
     memcpy(PesHeader + pes_header_len, "BCMV", 4);
     pes_header_len += 4;
-    
+
     if (is_vp9 && STB_VUPLUS == GetSTBType()) {
         uint32_t vp9_pts = (call->Pts == INVALID_PTS_VALUE ? call->Dts : call->Pts) / 2;
         memcpy(&PesHeader[9], &vp9_pts, sizeof(vp9_pts));
     }
-    
+
     if (is_vp6)
             ++len;
     PesHeader[pes_header_len++] = (len & 0xFF000000) >> 24;
@@ -149,7 +149,7 @@ static int writeData(void *_call, bool is_vp6, bool is_vp9)
         // pes header
         if (pes_header_len != WriteExt(call->WriteV, call->fd, PesHeader, pes_header_len)) return -1;
         if (bytes != WriteExt(call->WriteV, call->fd, call->data, bytes)) return -1;
-        
+
         offs += bytes;
 
         while (bytes < call->len)

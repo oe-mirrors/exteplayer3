@@ -109,16 +109,16 @@ static int writeData(void* _call)
 
     iov[0].iov_base = PesHeader;
     iov[0].iov_len = InsertPesHeader (PesHeader, call->len, MPEG_AUDIO_PES_START_CODE, call->Pts, 0); //+ sizeof(AC3_SYNC_HEADER)
-    
+
     //PesHeader[6] = 0x81;
     //PesHeader[7] = 0x80;
     //PesHeader[8] = 0x09;
-                
+
     //iov[1].iov_base = AC3_SYNC_HEADER;
     //iov[1].iov_len = sizeof(AC3_SYNC_HEADER);
     iov[1].iov_base = call->data;
     iov[1].iov_len = call->len;
-    
+
     ac3_printf(40, "PES HEADER LEN %d\n", (int)iov[0].iov_len);
 
     return call->WriteV(call->fd, iov, 2);

@@ -88,7 +88,7 @@ static void getMutex(int line)
     subtitle_printf(100, "%d received mutex\n", line);
 }
 
-static void releaseMutex(int line) 
+static void releaseMutex(int line)
 {
     pthread_mutex_unlock(&mutex);
 
@@ -248,7 +248,7 @@ static char * json_string_escape(char *str)
     char *ptr2 = str;
     while (*ptr2 != '\0')
     {
-        switch (*ptr2) 
+        switch (*ptr2)
         {
         case '"':
             *ptr1++ = '\\';
@@ -270,11 +270,11 @@ static char * json_string_escape(char *str)
             *ptr1++ = '\\';
             *ptr1++ = 'n';
         break;
-        case '\r': 
+        case '\r':
             *ptr1++ = '\\';
             *ptr1++ = 'r';
         break;
-        case '\t': 
+        case '\t':
             *ptr1++ = '\\';
             *ptr1++ = 't';
         break;
@@ -282,7 +282,7 @@ static char * json_string_escape(char *str)
             *ptr1++ = *ptr2;
             break;
         }
-        
+
         ++ptr2;
     }
     *ptr1 = '\0';
@@ -359,7 +359,7 @@ static int Write(void *_context, void *data)
     char *Encoding      = NULL;
     SubtitleOut_t *out  = NULL;
     int32_t curtrackid  = -1;
-    
+
     subtitle_printf(10, "\n");
 
     if (data == NULL)
@@ -459,7 +459,7 @@ static int Write(void *_context, void *data)
     return cERR_SUBTITLE_NO_ERROR;
 }
 
-static int32_t subtitle_Open(Context_t *context __attribute__((unused))) 
+static int32_t subtitle_Open(Context_t *context __attribute__((unused)))
 {
     uint32_t i = 0 ;
 
@@ -504,14 +504,14 @@ static int32_t subtitle_Close(Context_t *context __attribute__((unused)))
     return cERR_SUBTITLE_NO_ERROR;
 }
 
-static int Command(void  *_context, OutputCmd_t command, void *argument) 
+static int Command(void  *_context, OutputCmd_t command, void *argument)
 {
     Context_t  *context = (Context_t*) _context;
     int ret = cERR_SUBTITLE_NO_ERROR;
 
     subtitle_printf(50, "%d\n", command);
 
-    switch(command) 
+    switch(command)
     {
     case OUTPUT_OPEN:
     {
@@ -523,11 +523,11 @@ static int Command(void  *_context, OutputCmd_t command, void *argument)
         ret = subtitle_Close(context);
         break;
     }
-    case OUTPUT_PLAY: 
+    case OUTPUT_PLAY:
     {
         break;
     }
-    case OUTPUT_STOP: 
+    case OUTPUT_STOP:
     {
         break;
     }
@@ -546,7 +546,7 @@ static int Command(void  *_context, OutputCmd_t command, void *argument)
         ret = Flush();
         break;
     }
-    case OUTPUT_PAUSE: 
+    case OUTPUT_PAUSE:
     {
         subtitle_err("Subtitle Pause not implemented\n");
         ret = cERR_SUBTITLE_ERROR;

@@ -28,7 +28,7 @@
 
 #include "type.h"
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 typedef struct _BW
 {
 	uint8* buf;
@@ -39,7 +39,7 @@ typedef struct _BW
 
 } BW;
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 static void __inline clear_bw(BW* p)
 {
 	p->pos = 0;
@@ -64,7 +64,7 @@ static void __inline forword_bits(BW* p, uint32 bits)
 		p->buf[p->pos++] = (p->tmp >> 16) & 0xff;
 		p->buf[p->pos++] = (p->tmp >> 8 ) & 0xff;
 		p->buf[p->pos++] = (p->tmp >> 0 ) & 0xff;
-		
+
 		p->tmp = 0;
 		p->bitoffset -= 32;
 	}
@@ -102,7 +102,7 @@ static void __inline pad_to_boundary(BW* p)
 static void __inline flash_bw(BW* p)
 {
 	pad_to_boundary(p);
-	
+
 	switch (p->bitoffset)
 	{
 	case 0: // nothing to do
@@ -141,7 +141,7 @@ static void __inline put_vlcdec(BW* bw, VLCDEC* vlcdec)
 static void __inline m4v_stuffing(BW* p)
 {
 	int length;
-	
+
 	put_bits(p, 1, 0);
 	length = (- p->bitoffset) & 7;
 	if (length) put_bits(p, length, (1 << length) - 1);

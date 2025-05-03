@@ -28,7 +28,7 @@
 
 #include "type.h"
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 typedef struct _BR
 {
   const uint8* buf;
@@ -37,7 +37,7 @@ typedef struct _BR
   int bitoffset;
 } BR;
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////// 
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 static void init_br(BR* p, const uint8* buf, uint32 size)
 {
   p->buf = buf;
@@ -84,7 +84,7 @@ static uint32 show_bits(BR* p, uint32 bits)
 {
   const uint8* pp;
   uint32 tmp;
-  
+
   pp = p->buf + p->read;
   tmp = (pp[0] << 24) | (pp[1] << 16) | (pp[2] << 8 ) | (pp[3]);
   tmp <<= p->bitoffset;
@@ -97,7 +97,7 @@ static int32 show_sbits(BR* p, uint32 bits)
 {
   const uint8* pp;
   int32 tmp;
-  
+
   pp = p->buf + p->read;
   tmp = (pp[0] << 24) | (pp[1] << 16) | (pp[2] << 8 ) | (pp[3]);
   tmp <<= p->bitoffset;
@@ -156,16 +156,16 @@ static int __inline get_vlc(BR* br, const VLCtab* table, int bits, int max_depth
 	index = show_bits(br, bits);
 	code  = table[index].code;
 	n     = table[index].n;
-		
+
 	if (max_depth > 1 && n < 0)
 	{
 		flash_bits(br, bits);
 		nb_bits = -n;
-		
+
 		index = show_bits(br, nb_bits) + code;
 		code = table[index].code;
 		n = table[index].n;
-	}	
+	}
 
 	flash_bits(br, n);
 	return code;

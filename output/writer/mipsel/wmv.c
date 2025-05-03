@@ -85,19 +85,19 @@ static int writeData(void* _call)
 
     wmv_printf(10, "\n");
 
-    if (call == NULL) 
+    if (call == NULL)
     {
         wmv_err("call data is NULL...\n");
         return 0;
     }
 
-    if ((call->data == NULL) || (call->len <= 0)) 
+    if ((call->data == NULL) || (call->len <= 0))
     {
         wmv_err("parsing NULL Data. ignoring...\n");
         return 0;
     }
 
-    if (call->fd < 0) 
+    if (call->fd < 0)
     {
         wmv_err("file pointer < 0. ignoring ...\n");
         return 0;
@@ -105,14 +105,14 @@ static int writeData(void* _call)
 
     wmv_printf(10, "VideoPts %lld\n", call->Pts);
     wmv_printf(10, "Got Private Size %d\n", call->private_size);
-    
+
     unsigned char PesHeader[PES_MAX_HEADER_SIZE + sizeof(Vc1FrameStartCode)];
     int32_t ic = 0;
     struct iovec iov[5];
     unsigned int PacketLength = 0;
-    
+
     iov[ic++].iov_base = PesHeader;
-    if (initialHeader) 
+    if (initialHeader)
     {
         initialHeader = 0;
         if(videocodecdata.data)
@@ -123,7 +123,7 @@ static int writeData(void* _call)
 
         unsigned int codec_size = call->private_size;
         if (codec_size > 4) codec_size = 4;
- 
+
         videocodecdata.length = 33;
         uint8_t *data = videocodecdata.data = malloc(videocodecdata.length);
         memset(videocodecdata.data, 0, videocodecdata.length);
@@ -150,28 +150,28 @@ static int writeData(void* _call)
         needFrameStartCode = 1;
         PacketLength += sizeof(Vc1FrameStartCode);
     }
-    
+
     iov[ic].iov_base  = call->data;
     iov[ic++].iov_len = call->len;
     PacketLength     += call->len;
-    
+
     iov[0].iov_len = InsertPesHeader(PesHeader, PacketLength, MPEG_VIDEO_PES_START_CODE, call->Pts, 0);
 
     /* some mipsel receiver(s) like et4x00 needs to have Copy(0)/Original(1) flag set to Original */
     PesHeader[6] |= 1;
-    
+
     if(needFrameStartCode)
     {
         memcpy(PesHeader + iov[0].iov_len, Vc1FrameStartCode, sizeof(Vc1FrameStartCode) );
         iov[0].iov_len += sizeof(Vc1FrameStartCode);
     }
-    
+
     if(videocodecdata.data)
     {
         free(videocodecdata.data);
         videocodecdata.data = NULL;
     }
-    
+
     return call->WriteV(call->fd, iov, ic);
 }
 

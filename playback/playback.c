@@ -85,7 +85,7 @@ bool PlaybackDieNowRegisterCallback(PlaybackDieNowCallback callback)
                 ret = true;
                 break;
             }
-            
+
             if (playbackDieNowCallbacks[i] == NULL)
             {
                 playbackDieNowCallbacks[i] = callback;
@@ -110,9 +110,9 @@ static int PlaybackOpen(Context_t  *context, PlayFiles_t *pFiles)
     {
         PlaybackStop(context);
     }
-    
+
     char *uri = pFiles->szFirstFile;
-    
+
     playback_printf(10, "URI=%s\n", uri);
 
     if (context->playback->isPlaying)
@@ -128,14 +128,14 @@ static int PlaybackOpen(Context_t  *context, PlayFiles_t *pFiles)
     context->playback->isFile = 0;
     context->playback->isHttp = 0;
 
-    if (!strncmp("file://", uri, 7) || !strncmp("myts://", uri, 7)) 
+    if (!strncmp("file://", uri, 7) || !strncmp("myts://", uri, 7))
     {
         context->playback->isFile = 1;
-        if (!strncmp("myts://", uri, 7)) 
+        if (!strncmp("myts://", uri, 7))
         {
             memcpy(context->playback->uri, "file", 4);
             context->playback->noprobe = 1;
-        } 
+        }
         else
         {
             context->playback->noprobe = 0;
@@ -147,12 +147,12 @@ static int PlaybackOpen(Context_t  *context, PlayFiles_t *pFiles)
             playback_err("Wrong extension (%s)\n", context->playback->uri+7);
             return cERR_PLAYBACK_ERROR;
         }
-    } 
-    else if (strstr(uri, "://")) 
+    }
+    else if (strstr(uri, "://"))
     {
         context->playback->isHttp = 1;
         extension = "mp3";
-        if (!strncmp("mms://", uri, 6)) 
+        if (!strncmp("mms://", uri, 6))
         {
             // mms is in reality called rtsp, and ffmpeg expects this
             char * tUri = (char*)malloc(strlen(uri) + 2);
@@ -182,7 +182,7 @@ static int PlaybackOpen(Context_t  *context, PlayFiles_t *pFiles)
     return cERR_PLAYBACK_NO_ERROR;
 }
 
-static int PlaybackClose(Context_t  *context) 
+static int PlaybackClose(Context_t  *context)
 {
     int ret = cERR_PLAYBACK_NO_ERROR;
 
@@ -202,7 +202,7 @@ static int PlaybackClose(Context_t  *context)
     context->playback->BackWard     = 0;
     context->playback->SlowMotion   = 0;
     context->playback->Speed        = 0;
-    if(context->playback->uri) 
+    if(context->playback->uri)
     {
         free(context->playback->uri);
         context->playback->uri = NULL;
@@ -213,14 +213,14 @@ static int PlaybackClose(Context_t  *context)
     return ret;
 }
 
-static int PlaybackPlay(Context_t  *context) 
+static int PlaybackPlay(Context_t  *context)
 {
     pthread_attr_t attr;
     int ret = cERR_PLAYBACK_NO_ERROR;
 
     playback_printf(10, "\n");
 
-    if (!context->playback->isPlaying) 
+    if (!context->playback->isPlaying)
     {
         context->playback->AVSync = 1;
         context->output->Command(context, OUTPUT_AVSYNC, NULL);
@@ -228,7 +228,7 @@ static int PlaybackPlay(Context_t  *context)
         context->playback->isCreationPhase = 1;	// allows the created thread to go into wait mode
         ret = context->output->Command(context, OUTPUT_PLAY, NULL);
 
-        if (ret != 0) 
+        if (ret != 0)
         {
             playback_err("OUTPUT_PLAY failed!\n");
             playback_err("clearing isCreationPhase!\n");
@@ -241,7 +241,7 @@ static int PlaybackPlay(Context_t  *context)
             context->playback->Speed           = 0;
             context->container->selectedContainer->Command(context, CONTAINER_STOP, NULL);
         }
-        else 
+        else
         {
             context->playback->isPlaying    = 1;
             context->playback->isPaused     = 0;
@@ -272,18 +272,18 @@ static int PlaybackPlay(Context_t  *context)
     return ret;
 }
 
-static int PlaybackPause(Context_t  *context) 
+static int PlaybackPause(Context_t  *context)
 {
     int ret = cERR_PLAYBACK_NO_ERROR;
 
     playback_printf(10, "\n");
 
-    if (context->playback->isPlaying && !context->playback->isPaused) 
+    if (context->playback->isPlaying && !context->playback->isPaused)
     {
         set_pause_timeout(1);
-        
+
         context->playback->isPaused     = 1;
-        
+
         context->output->Command(context, OUTPUT_PAUSE, NULL);
 
         //context->playback->isPlaying  = 1;
@@ -302,15 +302,15 @@ static int PlaybackPause(Context_t  *context)
     return ret;
 }
 
-static int32_t PlaybackContinue(Context_t  *context) 
+static int32_t PlaybackContinue(Context_t  *context)
 {
     int32_t ret = cERR_PLAYBACK_NO_ERROR;
 
     playback_printf(10, "\n");
 
     if (context->playback->isPlaying &&
-       (context->playback->isPaused || context->playback->isForwarding || 
-        context->playback->BackWard || context->playback->SlowMotion)) 
+       (context->playback->isPaused || context->playback->isForwarding ||
+        context->playback->BackWard || context->playback->SlowMotion))
     {
 
         set_pause_timeout(0);
@@ -334,16 +334,16 @@ static int32_t PlaybackContinue(Context_t  *context)
     return ret;
 }
 
-static int32_t PlaybackStop(Context_t  *context) 
+static int32_t PlaybackStop(Context_t  *context)
 {
     int32_t ret = cERR_PLAYBACK_NO_ERROR;
 
     playback_printf(10, "\n");
-    
+
     PlaybackDieNow(1);
     context->playback->stamp = (void *)-1;
 
-    if (context && context->playback && context->playback->isPlaying) 
+    if (context && context->playback && context->playback->isPlaying)
     {
 
         context->playback->isPaused     = 0;
@@ -367,15 +367,15 @@ static int32_t PlaybackStop(Context_t  *context)
     return ret;
 }
 
-static int32_t PlaybackTerminate(Context_t  *context) 
+static int32_t PlaybackTerminate(Context_t  *context)
 {
     int32_t ret = cERR_PLAYBACK_NO_ERROR;
 
     playback_printf(20, "\n");
-    
+
     PlaybackDieNow(1);
 
-    if ( context && context->playback && context->playback->isPlaying ) 
+    if ( context && context->playback && context->playback->isPlaying )
     {
         //First Flush and than delete container, else e2 cant read length of file anymore
 
@@ -393,7 +393,7 @@ static int32_t PlaybackTerminate(Context_t  *context)
         context->playback->SlowMotion   = 0;
         context->playback->Speed        = 0;
 
-    } 
+    }
     else
     {
         playback_err("%p %p %d\n", context, context->playback, context->playback->isPlaying);
@@ -408,19 +408,19 @@ static int32_t PlaybackTerminate(Context_t  *context)
     return ret;
 }
 
-static int32_t PlaybackSeek(Context_t  *context, int64_t *pos, uint8_t absolute) 
+static int32_t PlaybackSeek(Context_t  *context, int64_t *pos, uint8_t absolute)
 {
     int32_t ret = cERR_PLAYBACK_NO_ERROR;
     static uint32_t stamp = 0;
 
     playback_printf(10, "pos: %"PRIu64"\n", *pos);
 
-    if (context->playback->isPlaying && !context->playback->isForwarding && !context->playback->BackWard && !context->playback->SlowMotion && !context->playback->isPaused) 
+    if (context->playback->isPlaying && !context->playback->isForwarding && !context->playback->BackWard && !context->playback->SlowMotion && !context->playback->isPaused)
     {
         context->playback->isSeeking = 1;
         /* We changing current stamp, so all frames with old stamps will be skipped
-         * Without this there could be situation when the ffmpeg thread is 
-         * in the av_read_frame(), so, even if we flushed data,  still 
+         * Without this there could be situation when the ffmpeg thread is
+         * in the av_read_frame(), so, even if we flushed data,  still
          * data from the old position were written
          */
         stamp += 1;
@@ -435,7 +435,7 @@ static int32_t PlaybackSeek(Context_t  *context, int64_t *pos, uint8_t absolute)
             context->container->selectedContainer->Command(context, CONTAINER_SEEK, pos);
         }
         context->playback->isSeeking = 0;
-    } 
+    }
     else
     {
         playback_err("not possible\n");
@@ -458,7 +458,7 @@ static int32_t PlaybackPts(Context_t  *context, int64_t *pts)
     if (context->playback->isPlaying)
     {
         ret = context->output->Command(context, OUTPUT_PTS, pts);
-    } 
+    }
     else
     {
         playback_err("not possible\n");
@@ -470,7 +470,7 @@ static int32_t PlaybackPts(Context_t  *context, int64_t *pts)
     return ret;
 }
 
-static int32_t PlaybackGetFrameCount(Context_t  *context, int64_t *frameCount) 
+static int32_t PlaybackGetFrameCount(Context_t  *context, int64_t *frameCount)
 {
     int ret = cERR_PLAYBACK_NO_ERROR;
 
@@ -478,7 +478,7 @@ static int32_t PlaybackGetFrameCount(Context_t  *context, int64_t *frameCount)
 
     *frameCount = 0;
 
-    if (context->playback->isPlaying) 
+    if (context->playback->isPlaying)
     {
         ret = context->output->Command(context, OUTPUT_GET_FRAME_COUNT, frameCount);
     } else
@@ -492,7 +492,7 @@ static int32_t PlaybackGetFrameCount(Context_t  *context, int64_t *frameCount)
     return ret;
 }
 
-static int32_t PlaybackLength(Context_t  *context, int64_t *length) 
+static int32_t PlaybackLength(Context_t  *context, int64_t *length)
 {
     int32_t ret = cERR_PLAYBACK_NO_ERROR;
 
@@ -500,13 +500,13 @@ static int32_t PlaybackLength(Context_t  *context, int64_t *length)
 
     *length = -1;
 
-    if (context->playback->isPlaying) 
+    if (context->playback->isPlaying)
     {
         if (context->container && context->container->selectedContainer)
         {
             context->container->selectedContainer->Command(context, CONTAINER_LENGTH, length);
         }
-    } 
+    }
     else
     {
         playback_err("not possible\n");
@@ -527,7 +527,7 @@ static int32_t PlaybackSwitchAudio(Context_t  *context, int32_t *track)
 
     if (context && context->playback && context->playback->isPlaying)
     {
-        if (context->manager && context->manager->audio) 
+        if (context->manager && context->manager->audio)
         {
             context->manager->audio->Command(context, MANAGER_GET, &curtrackid);
             context->manager->audio->Command(context, MANAGER_SET, track);
@@ -554,7 +554,7 @@ static int32_t PlaybackSwitchAudio(Context_t  *context, int32_t *track)
             }
             //PlaybackContinue(context);
         }
-    } 
+    }
     else
     {
         playback_err("switch audio not possible\n");
@@ -565,7 +565,7 @@ static int32_t PlaybackSwitchAudio(Context_t  *context, int32_t *track)
     return ret;
 }
 
-static int32_t PlaybackSwitchSubtitle(Context_t  *context, int32_t *track) 
+static int32_t PlaybackSwitchSubtitle(Context_t  *context, int32_t *track)
 {
     int32_t ret = cERR_PLAYBACK_NO_ERROR;
     int32_t curtrackid = -1;
@@ -575,12 +575,12 @@ static int32_t PlaybackSwitchSubtitle(Context_t  *context, int32_t *track)
 
     if (context && context->playback && context->playback->isPlaying )
     {
-        if (context->manager && context->manager->subtitle) 
+        if (context->manager && context->manager->subtitle)
         {
             context->manager->subtitle->Command(context, MANAGER_GET, &curtrackid);
             context->manager->subtitle->Command(context, MANAGER_SET, track);
             context->manager->subtitle->Command(context, MANAGER_GET, &nextrackid);
-          
+
             if (curtrackid != nextrackid && nextrackid > -1)
             {
                 if (context->output && context->output->subtitle)
@@ -593,13 +593,13 @@ static int32_t PlaybackSwitchSubtitle(Context_t  *context, int32_t *track)
                     context->container->selectedContainer->Command(context, CONTAINER_SWITCH_SUBTITLE, &nextrackid);
                 }
             }
-        } 
+        }
         else
         {
             ret = cERR_PLAYBACK_ERROR;
             playback_err("no subtitle\n");
         }
-    } 
+    }
     else
     {
         playback_err("not possible\n");
@@ -611,15 +611,15 @@ static int32_t PlaybackSwitchSubtitle(Context_t  *context, int32_t *track)
     return ret;
 }
 
-static int32_t PlaybackInfo(Context_t  *context, char **infoString) 
+static int32_t PlaybackInfo(Context_t  *context, char **infoString)
 {
     int32_t ret = cERR_PLAYBACK_NO_ERROR;
 
     playback_printf(10, "\n");
 
-    /* konfetti comment: 
-     * removed if clause here (playback running) because its 
-     * not necessary for all container. e.g. in case of ffmpeg 
+    /* konfetti comment:
+     * removed if clause here (playback running) because its
+     * not necessary for all container. e.g. in case of ffmpeg
      * container playback must not play to get the info.
      */
     if (context->container && context->container->selectedContainer)
@@ -632,7 +632,7 @@ static int32_t PlaybackInfo(Context_t  *context, char **infoString)
     return ret;
 }
 
-static int32_t Command(void* _context, PlaybackCmd_t command, void *argument) 
+static int32_t Command(void* _context, PlaybackCmd_t command, void *argument)
 {
     Context_t* context = (Context_t*) _context; /* to satisfy compiler */
     int32_t ret = cERR_PLAYBACK_NO_ERROR;
@@ -640,80 +640,80 @@ static int32_t Command(void* _context, PlaybackCmd_t command, void *argument)
     playback_printf(20, "Command %d\n", command);
 
 
-    switch(command) 
+    switch(command)
     {
-        case PLAYBACK_OPEN: 
+        case PLAYBACK_OPEN:
         {
             ret = PlaybackOpen(context, (PlayFiles_t*)argument);
             break;
         }
-        case PLAYBACK_CLOSE: 
+        case PLAYBACK_CLOSE:
         {
             ret = PlaybackClose(context);
             break;
         }
-        case PLAYBACK_PLAY: 
+        case PLAYBACK_PLAY:
         {
             ret = PlaybackPlay(context);
             break;
         }
-        case PLAYBACK_STOP: 
+        case PLAYBACK_STOP:
         {
             ret = PlaybackStop(context);
             break;
         }
-        case PLAYBACK_PAUSE: 
+        case PLAYBACK_PAUSE:
         {
             ret = PlaybackPause(context);
             break;
         }
-        case PLAYBACK_CONTINUE: 
+        case PLAYBACK_CONTINUE:
         {
             ret = PlaybackContinue(context);
             break;
         }
-        case PLAYBACK_TERM: 
+        case PLAYBACK_TERM:
         {
             ret = PlaybackTerminate(context);
             break;
         }
-        case PLAYBACK_SEEK: 
+        case PLAYBACK_SEEK:
         {
             ret = PlaybackSeek(context, (int64_t*)argument, 0);
             break;
         }
-        case PLAYBACK_SEEK_ABS: 
+        case PLAYBACK_SEEK_ABS:
         {
             ret = PlaybackSeek(context, (int64_t*)argument, -1);
             break;
         }
-        case PLAYBACK_PTS: 
+        case PLAYBACK_PTS:
         {
             ret = PlaybackPts(context, (int64_t*)argument);
             break;
         }
-        case PLAYBACK_LENGTH: 
+        case PLAYBACK_LENGTH:
         {
             ret = PlaybackLength(context, (int64_t*)argument);
             break;
         }
-        case PLAYBACK_SWITCH_AUDIO: 
+        case PLAYBACK_SWITCH_AUDIO:
         {
             ret = PlaybackSwitchAudio(context, (int*)argument);
             break;
         }
-        case PLAYBACK_SWITCH_SUBTITLE: 
+        case PLAYBACK_SWITCH_SUBTITLE:
         {
             ret = PlaybackSwitchSubtitle(context, (int*)argument);
             break;
         }
-        case PLAYBACK_INFO: 
+        case PLAYBACK_INFO:
         {
             ret = PlaybackInfo(context, (char**)argument);
             break;
         }
-        case PLAYBACK_GET_FRAME_COUNT: 
-        { 
+        case PLAYBACK_GET_FRAME_COUNT:
+        {
             ret = PlaybackGetFrameCount(context, (uint64_t*)argument);
             break;
         }
