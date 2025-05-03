@@ -90,7 +90,7 @@ static int writeData(void* _call)
     mp3_printf(10, "AudioPts %lld\n", call->Pts);
 
     call->private_size = 0;
-    
+
     uint32_t headerSize = InsertPesHeader (PesHeader, call->len + call->private_size, MPEG_AUDIO_PES_START_CODE, call->Pts, 0);
     if(call->private_size > 0)
     {

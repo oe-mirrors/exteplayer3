@@ -96,7 +96,7 @@ static void RemoveAllRegularFiles(const char *mainDir, const char *filePattern)
     if(0 == dirp) return;
 
     struct dirent *pDir = 0;
-    char *fullpath = malloc(PATH_MAX+2); 
+    char *fullpath = malloc(PATH_MAX+2);
     if (fullpath)
     {
         while (1)
@@ -121,7 +121,7 @@ static int32_t Reset()
 {
     if (g_sys)
         avcodec_flush_buffers(g_sys->p_context);
-    
+
     RemoveAllRegularFiles(GetGraphicSubPath(), "[0-9]*_[0-9]*_[0-9]*.png");
 
     return 0;
@@ -292,7 +292,7 @@ static int32_t Write(WriterSubCallData_t *subPacket)
 
                 uint8_t *data[AV_NUM_DATA_POINTERS] = {NULL};
                 int linesize[AV_NUM_DATA_POINTERS] = {0};
- 
+
                 data[0] = av_malloc(desc_tab[j].w * desc_tab[j].h * 4);
                 linesize[0] = desc_tab[j].w * 4;
 

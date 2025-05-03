@@ -99,7 +99,7 @@ static uint8_t updateCodecData(uint8_t *data, int32_t size)
 {
     static uint8_t *oldData = NULL;
     static int32_t oldSize = 0;
-    
+
     uint8_t update = 0;
     if (data != NULL && size > 0)
     {
@@ -168,12 +168,12 @@ static int writeData(void* _call)
     iov[ic].iov_base = PesHeader;
     iov[ic++].iov_len = InsertPesHeader (PesHeader, call->len, MPEG_VIDEO_PES_START_CODE, call->Pts, 0);
 
-    if (updateCodecData(call->private_data, call->private_size)) 
+    if (updateCodecData(call->private_data, call->private_size))
     {
         iov[ic].iov_base = call->private_data;
         iov[ic++].iov_len = call->private_size;
     }
-    
+
     iov[ic].iov_base = call->data;
     iov[ic++].iov_len = call->len;
 

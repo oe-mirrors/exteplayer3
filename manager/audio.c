@@ -64,7 +64,7 @@ static int ManagerAdd(Context_t  *context, Track_t track) {
 
     audio_mgr_printf(10, "%s::%s name=\"%s\" encoding=\"%s\" id=%d\n", FILENAME, __FUNCTION__, track.Name, track.Encoding, track.Id);
 
-    if (Tracks == NULL) 
+    if (Tracks == NULL)
     {
         Tracks = malloc(sizeof(Track_t) * TRACKWRAP);
         int i;
@@ -81,21 +81,21 @@ static int ManagerAdd(Context_t  *context, Track_t track) {
     }
 
     int i = 0;
-    for (i = 0; i < TRACKWRAP; i++) 
+    for (i = 0; i < TRACKWRAP; i++)
     {
-        if (Tracks[i].Id == track.Id) 
+        if (Tracks[i].Id == track.Id)
         {
             Tracks[i].pending = 0;
             return cERR_AUDIO_MGR_NO_ERROR;
         }
     }
 
-    if (TrackCount < TRACKWRAP) 
+    if (TrackCount < TRACKWRAP)
     {
         copyTrack(&Tracks[TrackCount], &track);
         TrackCount++;
-    } 
-    else 
+    }
+    else
     {
         audio_mgr_err("%s:%s TrackCount out if range %d - %d\n", FILENAME, __FUNCTION__, TrackCount, TRACKWRAP);
         return cERR_AUDIO_MGR_ERROR;
@@ -110,13 +110,13 @@ static int ManagerAdd(Context_t  *context, Track_t track) {
     return cERR_AUDIO_MGR_NO_ERROR;
 }
 
-static TrackDescription_t* ManagerList(Context_t  *context __attribute__((unused))) 
+static TrackDescription_t* ManagerList(Context_t  *context __attribute__((unused)))
 {
     int i = 0;
     TrackDescription_t *tracklist = NULL;
 
     audio_mgr_printf(10, "%s::%s\n", FILENAME, __FUNCTION__);
-    if (Tracks != NULL) 
+    if (Tracks != NULL)
     {
         tracklist = malloc(sizeof(TrackDescription_t) *((TrackCount) + 1));
         if (tracklist == NULL)
@@ -124,15 +124,15 @@ static TrackDescription_t* ManagerList(Context_t  *context __attribute__((unused
             audio_mgr_err("%s:%s malloc failed\n", FILENAME, __FUNCTION__);
             return NULL;
         }
-        
+
         int j = 0;
-        for (i = 0; i < TrackCount; ++i) 
+        for (i = 0; i < TrackCount; ++i)
         {
             if (Tracks[i].pending || Tracks[i].Id < 0)
             {
                 continue;
             }
-            
+
             tracklist[j].Id = Tracks[i].Id;
             tracklist[j].Name = strdup(Tracks[i].Name);
             tracklist[j].Encoding = strdup(Tracks[i].Encoding);
@@ -159,7 +159,7 @@ static int ManagerDel(Context_t * context) {
         }
         free(Tracks);
         Tracks = NULL;
-    } 
+    }
     else
     {
         audio_mgr_err("%s::%s nothing to delete!\n", FILENAME, __FUNCTION__);
@@ -183,9 +183,9 @@ static int Command(void  *_context, ManagerCmd_t command, void * argument)
 
     audio_mgr_printf(10, "%s::%s\n", FILENAME, __FUNCTION__);
 
-    switch(command) 
+    switch(command)
     {
-    case MANAGER_ADD: 
+    case MANAGER_ADD:
     {
         Track_t * track = argument;
         ret = ManagerAdd(context, *track);
@@ -207,8 +207,8 @@ static int Command(void  *_context, ManagerCmd_t command, void * argument)
         *((int*)argument) = TrackCount;
         break;
     }
-    
-    case MANAGER_GET: 
+
+    case MANAGER_GET:
     {
         audio_mgr_printf(20, "%s::%s MANAGER_GET\n", FILENAME, __FUNCTION__);
 
@@ -222,7 +222,7 @@ static int Command(void  *_context, ManagerCmd_t command, void * argument)
         }
     break;
     }
-    case MANAGER_GET_TRACK_DESC: 
+    case MANAGER_GET_TRACK_DESC:
     {
         if ((TrackCount > 0) && (CurrentTrack >=0))
         {
@@ -242,7 +242,7 @@ static int Command(void  *_context, ManagerCmd_t command, void * argument)
         }
     break;
     }
-    case MANAGER_GET_TRACK: 
+    case MANAGER_GET_TRACK:
     {
         audio_mgr_printf(20, "%s::%s MANAGER_GET_TRACK\n", FILENAME, __FUNCTION__);
 
@@ -287,14 +287,14 @@ static int Command(void  *_context, ManagerCmd_t command, void * argument)
 
         for (i = 0; i < TrackCount; i++)
         {
-            if (Tracks[i].Id == *((int*)argument)) 
+            if (Tracks[i].Id == *((int*)argument))
             {
                 CurrentTrack = i;
                 break;
             }
         }
 
-        if (i == TrackCount) 
+        if (i == TrackCount)
         {
             audio_mgr_err("%s::%s track id %d unknown\n", FILENAME, __FUNCTION__, *((int*)argument));
             ret = cERR_AUDIO_MGR_ERROR;

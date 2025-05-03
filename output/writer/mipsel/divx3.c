@@ -67,7 +67,7 @@ static uint8_t initialHeader = 1;
 static uint8_t brcm_divx311_sequence_header[] =
 {
     0x00, 0x00, 0x01, 0xE0, 0x00, 0x34, 0x80, 0x80, // PES HEADER
-    0x05, 0x2F, 0xFF, 0xFF, 0xFF, 0xFF, 
+    0x05, 0x2F, 0xFF, 0xFF, 0xFF, 0xFF,
     0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x20, /* 0 .. 7 */
     0x08, 0xC8, 0x0D, 0x40, 0x00, 0x53, 0x88, 0x40, /* 8 .. 15 */
     0x0C, 0x40, 0x01, 0x90, 0x00, 0x97, 0x53, 0x0A, /* 16 .. 24 */
@@ -120,7 +120,7 @@ static int writeData(void* _call)
 
     struct iovec iov[8];
     int ic = 0;
-    
+
     if(initialHeader)
     {
         initialHeader = 0;
@@ -135,14 +135,14 @@ static int writeData(void* _call)
         data[2] = B_GET_BITS(height,9,2);
         data[3]= B_SET_BITS("height [1.0]", B_GET_BITS(height,1,0), 7, 6) |
             B_SET_BITS("'100000'", 0x20, 5, 0);
-            
+
         iov[ic].iov_base = brcm_divx311_sequence_header;
         iov[ic++].iov_len = sizeof(brcm_divx311_sequence_header);
     }
-    
+
     iov[ic].iov_base = PesHeader;
     uint32_t headerSize = 0;
-    
+
     if (0 != memcmp(call->data, "\x00\x00\x01\xb6", 4))
     {
         headerSize = InsertPesHeader (PesHeader, call->len+4, MPEG_VIDEO_PES_START_CODE, call->Pts, 0);
@@ -154,7 +154,7 @@ static int writeData(void* _call)
         headerSize = InsertPesHeader (PesHeader, call->len, MPEG_VIDEO_PES_START_CODE, call->Pts, 0);
     }
     iov[ic++].iov_len = headerSize;
-    
+
     iov[ic].iov_base = call->data;
     iov[ic++].iov_len = call->len;
 

@@ -1,6 +1,6 @@
-/* 
- * Wrapper functions for FFMPEG API which 
- * allows to compile and use exteplayer3 
+/*
+ * Wrapper functions for FFMPEG API which
+ * allows to compile and use exteplayer3
  * with old ffmpeg libs
  */
 static void wrapped_frame_free(void *param)
@@ -61,7 +61,7 @@ static int64_t get_packet_duration(AVPacket *packet)
 static AVCodecParameters *get_codecpar(AVStream *stream)
 {
     return stream->codecpar;
-} 
+}
 #else
 static AVCodecContext *get_codecpar(AVStream *stream)
 {
@@ -74,7 +74,7 @@ static AVRational get_frame_rate(AVStream *stream)
     AVRational rateRational = stream->avg_frame_rate;
     if (0 == rateRational.den)
     {
-        rateRational = stream->r_frame_rate; 
+        rateRational = stream->r_frame_rate;
     }
     return rateRational;
 }
@@ -120,14 +120,14 @@ int store_avcodec_context(AVCodecContext *avCodecCtx, uint32_t cAVIdx, int id)
     {
         return -1;
     }
-    
+
     memset(ptr, 0x00, sizeof(CodecCtxStoreItem_t));
     ptr->next = g_codecCtxStoreListHead;
     g_codecCtxStoreListHead = ptr;
-    
+
     return 0;
 }
-#else 
+#else
 void free_all_stored_avcodec_context()
 {
 }
@@ -140,7 +140,7 @@ static AVCodecContext *wrapped_avcodec_get_context(uint32_t cAVIdx, AVStream *st
     if (!avCodecCtx)
     {
         avCodecCtx = avcodec_alloc_context3(NULL);
-        if (!avCodecCtx) 
+        if (!avCodecCtx)
         {
             ffmpeg_err("context3 alloc for stream %d failed\n", (int)stream->id);
             return NULL;

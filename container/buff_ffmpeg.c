@@ -18,7 +18,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
  *
  */
- 
+
 #define FILLBUFSIZE 0
 #define FILLBUFDIFF 1048576
 #define FILLBUFPAKET 5120
@@ -95,21 +95,21 @@ static void update_finish_timeout()
         int64_t currPts = -1;
         int32_t ret = g_context->playback->Command(g_context, PLAYBACK_PTS, &currPts);
         finishTimeout += 1;
-        
+
         if(maxInjectedPts < 0 || maxInjectedPts == INVALID_PTS_VALUE)
         {
             maxInjectedPts = 0;
         }
-        
+
         //printf("ret[%d] playPts[%"PRId64"] currPts[%"PRId64"] maxInjectedPts[%"PRId64"]\n", ret, playPts, currPts, maxInjectedPts);
-        
-        /* On some STBs PTS readed from decoder is invalid after seek or at start 
+
+        /* On some STBs PTS readed from decoder is invalid after seek or at start
          * this is the reason for additional validation when we what to close immediately
          */
-        if( !progressive_playback && 0 == ret && currPts >= maxInjectedPts && 
+        if( !progressive_playback && 0 == ret && currPts >= maxInjectedPts &&
             ((currPts - maxInjectedPts) / 90000) < 2 )
         {
-            /* close immediately 
+            /* close immediately
              */
             finishTimeout = TIMEOUT_MAX_ITERS + 1;
         }
@@ -133,7 +133,7 @@ static int32_t ffmpeg_read_wrapper_base(void *opaque, uint8_t *buf, int32_t buf_
             {
                 break;
             }
-            
+
             int32_t partLen = ffmpeg_real_read_org(opaque, buf+len, buf_size-len);
             if (partLen > 0)
             {
@@ -146,9 +146,9 @@ static int32_t ffmpeg_read_wrapper_base(void *opaque, uint8_t *buf, int32_t buf_
                 len = 0;
                 break;
             }
-            
+
             update_finish_timeout();
-            
+
             usleep(100000);
             continue;
         }
@@ -177,7 +177,7 @@ static int32_t ffmpeg_read_wrapper2(void *opaque, uint8_t *buf, int32_t buf_size
 }
 
 //for buffered io
-void getfillerMutex(const char *filename, const char *function, int line) 
+void getfillerMutex(const char *filename, const char *function, int line)
 {
     ffmpeg_printf(100, "::%d requesting mutex\n", line);
 
@@ -186,7 +186,7 @@ void getfillerMutex(const char *filename, const char *function, int line)
     ffmpeg_printf(100, "::%d received mutex\n", line);
 }
 
-void releasefillerMutex(const char *filename, const const char *function, int line) 
+void releasefillerMutex(const char *filename, const const char *function, int line)
 {
     pthread_mutex_unlock(&fillermutex);
 
@@ -213,7 +213,7 @@ static int32_t container_set_ffmpeg_buf_size(int32_t* size)
             ffmpeg_buf_size = (*size) + FILLBUFDIFF;
         }
     }
-    
+
     ffmpeg_printf(10, "size=%d, buffer size=%d\n", (*size), ffmpeg_buf_size);
     return cERR_CONTAINER_FFMPEG_NO_ERROR;
 }
@@ -264,14 +264,14 @@ static void ffmpeg_filler(Context_t *context, int32_t id, int32_t* inpause, int3
         return;
     }
 
-    while( (flag == 0 && avContextTab[0] != NULL && avContextTab[0]->pb != NULL && rwdiff > FILLBUFDIFF) || 
+    while( (flag == 0 && avContextTab[0] != NULL && avContextTab[0]->pb != NULL && rwdiff > FILLBUFDIFF) ||
            (flag == 1 && hasfillerThreadStarted[id] == 1 && avContextTab[0] != NULL && avContextTab[0]->pb != NULL && rwdiff > FILLBUFDIFF) )
     {
          if( 0 == PlaybackDieNow(0))
          {
             break;
          }
-         
+
          if(flag == 0 && ffmpeg_buf_stop == 1)
          {
              ffmpeg_buf_stop = 0;
@@ -297,18 +297,18 @@ static void ffmpeg_filler(Context_t *context, int32_t id, int32_t* inpause, int3
              ffmpeg_buf_valid_size = 0;
              rwdiff = ffmpeg_buf_size;
          }
-         
+
          if(ffmpeg_buf_read < ffmpeg_buf_write)
          {
              rwdiff = (ffmpeg_buf + ffmpeg_buf_size) - ffmpeg_buf_write;
              rwdiff += ffmpeg_buf_read - ffmpeg_buf;
          }
-         
+
          if(ffmpeg_buf_read > ffmpeg_buf_write)
          {
             rwdiff = ffmpeg_buf_read - ffmpeg_buf_write;
          }
-         
+
          int32_t size = FILLBUFPAKET;
          if(rwdiff - FILLBUFDIFF < size)
          {
@@ -337,7 +337,7 @@ static void ffmpeg_filler(Context_t *context, int32_t id, int32_t* inpause, int3
 
              getfillerMutex(__FILE__, __FUNCTION__,__LINE__);
              if(len > 0)
-             { 
+             {
                  memcpy(ffmpeg_buf_write, buf, len);
                  ffmpeg_buf_write += len;
              }
@@ -368,12 +368,12 @@ static void ffmpeg_filler(Context_t *context, int32_t id, int32_t* inpause, int3
                     {
                         buflen = ffmpeg_buf_write - ffmpeg_buf_read;
                     }
-                    
+
                     if(ffmpeg_buf_read > ffmpeg_buf_write)
                     {
                         buflen = (ffmpeg_buf + ffmpeg_buf_size) - ffmpeg_buf_read;
                         buflen += ffmpeg_buf_write - ffmpeg_buf;
-                    } 
+                    }
                     ffmpeg_seek_org(avContextTab[0]->pb->opaque, avContextTab[0]->pb->pos + buflen, SEEK_SET);
                     releasefillerMutex(__FILE__, __FUNCTION__,__LINE__);
                 }
@@ -416,7 +416,7 @@ static int32_t ffmpeg_start_fillerTHREAD(Context_t *context)
     {
         ffmpeg_printf(10, "is NOT Playing\n");
     }
-    
+
     //get filler thread ID
     //if the thread hangs for long time, we use a new id
     for(i = 0; i < 10; i++)
@@ -580,7 +580,7 @@ static int64_t ffmpeg_seek(void *opaque, int64_t offset, int32_t whence)
     {
         rwdiff = ffmpeg_buf_write - ffmpeg_buf_read;
     }
-    
+
     if(ffmpeg_buf_read > ffmpeg_buf_write)
     {
         rwdiff = (ffmpeg_buf + ffmpeg_buf_size) - ffmpeg_buf_read;
